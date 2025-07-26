@@ -1,0 +1,17 @@
+# Arquivos de ambiente virtual
+/web_app/venv/
+
+# Diretório de índice FAISS (gerado)
+/web_app/faiss_index/
+
+# Arquivos de cache do Python
+**/__pycache__/
+*.pyc
+
+# Arquivos de cache e dependências do Node.js
+/web_app/frontend/node_modules/
+/web_app/frontend/build/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -1,51 +1,40 @@
 import os
 import google.generativeai as genai
-from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 
-# Cache para armazenar a cadeia de QA e evitar reprocessamento
+# Cache para armazenar a cadeia de QA
 qa_chain_cache = None
 
 def inicializar_chatbot():
     """
-    Carrega os documentos, cria os embeddings, o vectorstore e a cadeia de QA.
+    Carrega o índice FAISS pré-construído e inicializa a cadeia de QA.
     Retorna True em caso de sucesso, False em caso de falha.
     """
     global qa_chain_cache
     try:
-        if not os.environ.get("GOOGLE_API_KEY"):
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
             print("Erro: A chave de API do Google (GOOGLE_API_KEY) não foi definida.")
             return False
+        genai.configure(api_key=api_key)
 
-        genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+        # Caminho para o índice salvo
+        caminho_indice = os.path.join(os.path.dirname(__file__), "..", "web_app", "faiss_index")
 
-        script_dir = os.path.dirname(__file__)
-        caminho_documentos = os.path.join(script_dir, "documentos")
-
-        if not os.path.isdir(caminho_documentos):
-            print(f"Erro: A pasta de documentos '{caminho_documentos}' não foi encontrada.")
+        if not os.path.isdir(caminho_indice):
+            print("-" * 80)
+            print(f"Erro: O diretório do índice '{caminho_indice}' não foi encontrado.")
+            print("Por favor, execute o script 'python web_app/criar_indice.py' primeiro.")
+            print("-" * 80)
             return False
 
-        print("Carregando documentos PDF...")
-        loader = PyPDFDirectoryLoader(caminho_documentos)
-        documentos = loader.load()
-
-        if not documentos:
-            print("Nenhum documento PDF encontrado.")
-            return False
-
-        print("Dividindo documentos em pedaços...")
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        textos = text_splitter.split_documents(documentos)
-
-        print("Criando embeddings e vectorstore com o Gemini...")
+        print("Carregando índice FAISS local...")
         embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-        vectorstore = FAISS.from_documents(textos, embeddings)
+        vectorstore = FAISS.load_local(caminho_indice, embeddings, allow_dangerous_deserialization=True)
 
         print("Criando a cadeia de QA com o Gemini...")
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
@@ -69,7 +58,7 @@ def inicializar_chatbot():
             return_source_documents=True,
             chain_type_kwargs={"prompt": prompt}
         )
-        print("Chatbot inicializado com sucesso!")
+        print("Chatbot inicializado com sucesso a partir do índice local!")
         return True
 
     except Exception as e:

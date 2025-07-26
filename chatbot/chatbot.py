@@ -1,4 +1,5 @@
 import os
+import re
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -39,15 +40,31 @@ def inicializar_chatbot():
         print("Criando a cadeia de QA com o Gemini...")
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
         
-        prompt_template = """Você é um assistente de atendimento especializado.
-        Sua tarefa é fornecer respostas precisas com base EXCLUSIVAMENTE no contexto fornecido.
-        Se a informação não estiver no contexto, diga: 'Não encontrei a informação nos documentos.'
-        Responda sempre em português do Brasil.
+        # NOVO PROMPT_TEMPLATE: Instruindo o modelo a extrair e formatar a resposta com base na "coluna" e tópicos
+        prompt_template = """Você é um assistente de atendimento especializado em artigos do Grupo Boticário.
+        Sua tarefa é fornecer respostas precisas e detalhadas com base EXCLUSIVAMENTE no contexto fornecido.
+        
+        **INSTRUÇÕES DE FORMATAÇÃO DA RESPOSTA:**
+        1.  **Código do Artigo:** Procure no contexto pela frase "Código e descrição do artigo". Se encontrar, extraia o código numérico associado a ela. Se não encontrar, use "Não Encontrado".
+        2.  **Título do Artigo:** Se encontrou o "Código e descrição do artigo", extraia a descrição (título) associada a ele. Caso contrário, use "Não Encontrado".
+        3.  **Tópico/Procedimento:** Tente identificar um tópico ou subtópico relevante no contexto que se relacione diretamente com a pergunta. Se não for possível identificar um tópico claro, use "Informações Gerais" ou "Página: [Número da Página]" (o número da página pode ser obtido do metadata do documento, se disponível).
+        4.  **Formato da Resposta:** Sua resposta DEVE seguir o formato EXATO abaixo:
+
+            ```
+            O código do artigo: [Código extraído ou "Não Encontrado"]
+            O título do Artigo: [Título extraído ou "Não Encontrado"]
+            Tópico: [Tópico inferido ou "Informações Gerais" ou "Página: X"]
+            Descrição do procedimento:
+            [Sua resposta detalhada e passo a passo, baseada no contexto, explicando o procedimento que o analista deve realizar para resolver o problema.]
+            ```
+
+        Se a informação exata para a pergunta não estiver no contexto fornecido, diga claramente "Não encontrei a informação específica para esta pergunta nos documentos disponíveis."
+        Responda sempre de forma clara, objetiva e EXCLUSIVAMENTE em português do Brasil.
 
         Contexto: {context}
 
         Pergunta: {question}
-        Resposta:"""
+        Resposta detalhada em português do Brasil:"""
 
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
 
@@ -68,6 +85,7 @@ def inicializar_chatbot():
 def get_chatbot_answer(question):
     """
     Recebe uma pergunta e retorna a resposta do chatbot.
+    A formatação da fonte é feita diretamente pelo modelo via prompt.
     Retorna uma tupla (success, result).
     """
     if qa_chain_cache is None:
@@ -76,8 +94,11 @@ def get_chatbot_answer(question):
     try:
         print(f"Recebendo pergunta: {question}")
         resposta = qa_chain_cache.invoke({"query": question})
-        print(f"Resposta gerada: {resposta['result']}")
-        return True, resposta["result"]
+        
+        final_response_text = resposta["result"]
+
+        print(f"Resposta gerada: {final_response_text}")
+        return True, final_response_text
     except Exception as e:
         error_message = f"Ocorreu um erro ao processar a pergunta: {e}"
         print(error_message)

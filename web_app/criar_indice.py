@@ -1,6 +1,7 @@
 import os
 import sys
 import pickle
+import re
 import google.generativeai as genai
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -40,9 +41,21 @@ def criar_e_salvar_indice():
             print("Nenhum documento PDF encontrado para indexar.")
             return
 
-        print("Dividindo documentos em pedaços...")
+        print("Dividindo documentos em pedaços e adicionando metadados...")
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         textos = text_splitter.split_documents(documentos)
+
+        # Adicionar metadados personalizados aos documentos
+        for doc in textos:
+            source_name = os.path.basename(doc.metadata.get('source', ''))
+            
+            # Extrair o código do artigo
+            article_code_match = re.search(r'Artigo (\d+)', source_name)
+            doc.metadata['article_code'] = article_code_match.group(1) if article_code_match else 'Não Informado'
+            
+            # Extrair o título do artigo (removendo a parte do artigo e a extensão .pdf)
+            title_match = re.match(r'(.*?)\s*Artigo\s*\d+\.pdf', source_name)
+            doc.metadata['article_title'] = title_match.group(1).strip() if title_match else source_name.replace('.pdf', '').strip()
 
         # 4. Gerar Embeddings e Criar o Índice FAISS
         print("Gerando embeddings e criando o índice FAISS...")

@@ -1,0 +1,21 @@
+1. Qual é o projeto? Objetivo vai ser de ajudar os analistas de atendimento com os artigos existentes de orientação para caso atendidos das franquias do Grupo Boticário, e com isso agilizar o atendimento diminuindo o TMA e TME do atendente.
+
+
+
+Como a IA está sendo utilizada nele?
+
+Precisamos de um IA que seja generativa e que consiga interagir com o analista e aprender com o passar do tempo, já tenho os artigo em PDF que poderíamos nos ajudar no início.
+
+
+
+Em que estágio o projeto se encontra?
+
+É um projeto que está em andamento !
+
+
+
+Que tipo de opinião você busca?
+
+Gostaria de saber se é possível me ajudar no desenvolvimento desse projeto, se sim
+
+gostaria que orientasse passo a passo, sou leigo e preciso da sua ajuda !

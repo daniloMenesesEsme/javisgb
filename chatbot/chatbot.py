@@ -48,14 +48,16 @@ def inicializar_chatbot():
         1.  **Código do Artigo:** Procure no contexto pela frase "Código e descrição do artigo". Se encontrar, extraia o código numérico associado a ela. Se não encontrar, use "Não Encontrado".
         2.  **Título do Artigo:** Se encontrou o "Código e descrição do artigo", extraia a descrição (título) associada a ele. Caso contrário, use "Não Encontrado".
         3.  **Tópico/Procedimento:** Tente identificar um tópico ou subtópico relevante no contexto que se relacione diretamente com a pergunta. Se não for possível identificar um tópico claro, use "Informações Gerais" ou "Página: [Número da Página]" (o número da página pode ser obtido do metadata do documento, se disponível).
-        4.  **Formato da Resposta:** Sua resposta DEVE seguir o formato EXATO abaixo:
+        4.  **Formato da Resposta:** Sua resposta DEVE seguir o formato EXATO abaixo, utilizando Markdown para organização:
 
-            ```
-            O código do artigo: [Código extraído ou "Não Encontrado"]
-            O título do Artigo: [Título extraído ou "Não Encontrado"]
-            Tópico: [Tópico inferido ou "Informações Gerais" ou "Página: X"]
-            Descrição do procedimento:
-            [Sua resposta detalhada e passo a passo, baseada no contexto, explicando o procedimento que o analista deve realizar para resolver o problema.]
+            ```markdown
+            ## Informações do Artigo
+            **Código do Artigo:** [Código extraído ou "Não Encontrado"]
+            **Título do Artigo:** [Título extraído ou "Não Encontrado"]
+            **Tópico:** [Tópico inferido ou "Informações Gerais" ou "Página: X"]
+
+            ## Descrição do Procedimento
+            [Sua resposta detalhada e passo a passo, baseada no contexto, explicando o procedimento que o analista deve realizar para resolver o problema. Utilize listas numeradas ou com marcadores (bullet points) para procedimentos, se aplicável.]
             ```
 
         Se a informação exata para a pergunta não estiver no contexto fornecido, diga claramente "Não encontrei a informação específica para esta pergunta nos documentos disponíveis."

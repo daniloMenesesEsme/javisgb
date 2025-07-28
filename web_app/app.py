@@ -2,11 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import sys
+from dotenv import load_dotenv
 
-# Adiciona o diretório do projeto ao PATH para encontrar a pasta 'chatbot'
+load_dotenv()
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Importa as funções refatoradas do módulo chatbot
 from chatbot.chatbot import inicializar_chatbot, get_chatbot_answer
 
 app = Flask(__name__)

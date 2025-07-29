@@ -22,34 +22,77 @@ def inicializar_chatbot():
             return False
         genai.configure(api_key=api_key)
 
-        # Caminho para o índice salvo
-        caminho_indice = os.path.join(os.path.dirname(__file__), "..", "web_app", "faiss_index")
+        # Caminho para o novo índice estruturado
+        caminho_indice = os.path.join(os.path.dirname(__file__), "..", "web_app", "faiss_index_estruturado")
 
         if not os.path.isdir(caminho_indice):
             print("-" * 80)
-            print(f"Erro: O diretório do índice '{caminho_indice}' não foi encontrado.")
-            print("Por favor, execute o script 'python web_app/criar_indice.py' primeiro.")
+            print(f"Erro: O diretório do índice estruturado '{caminho_indice}' não foi encontrado.")
+            print("Por favor, execute o script 'python web_app/criar_indice_estruturado.py' primeiro.")
             print("-" * 80)
             return False
 
-        print("Carregando índice FAISS local...")
+        print("Carregando índice FAISS estruturado local...")
         embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         vectorstore = FAISS.load_local(caminho_indice, embeddings, allow_dangerous_deserialization=True)
 
-        print("Criando a cadeia de QA com o Gemini...")
+        print("Criando a cadeia de QA com o Gemini e o novo prompt...")
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
         
-        prompt_template = """Você é um assistente de atendimento especializado.
-        Sua tarefa é fornecer respostas precisas com base EXCLUSIVAMENTE no contexto fornecido.
-        Se a informação não estiver no contexto, diga: 'Não encontrei a informação nos documentos.'
-        Responda sempre em português do Brasil.
+        # Novo prompt que aproveita os metadados dos documentos
+        prompt_template = """Você é um assistente de IA especialista em análise de documentos de conhecimento.
+        Sua tarefa é usar os metadados e o conteúdo do documento fornecido para responder à pergunta do usuário de forma clara e estruturada.
 
+        **REGRAS ESTRITAS DE FORMATAÇÃO DA RESPOSTA:**
+        Sua resposta DEVE OBRIGATORIAMENTE usar as informações dos metadados e do contexto para preencher o seguinte formato Markdown.
+
+        **1. Código do Artigo:**
+        - {codigo_artigo}
+
+        **2. Título do Artigo:**
+        - {titulo_artigo}
+
+        **3. Descrição das Possíveis Causas:**
+        - Com base no contexto, liste em formato de tópicos as possíveis causas, problemas ou cenários descritos.
+
+        **4. Descrição das Possíveis Soluções Aplicadas:**
+        - Com base no contexto, liste em formato de tópicos as soluções, procedimentos ou recomendações propostas.
+
+        **INSTRUÇÕES IMPORTANTES:**
+        - **NÃO INVENTE INFORMAÇÃO.** Se o contexto não fornecer detalhes para as causas ou soluções, informe que a informação não está detalhada no documento.
+        - **SEMPRE USE PORTUGUÊS DO BRASIL.**
+        - **BASEIE-SE APENAS NO CONTEXTO ABAIXO.**
+
+        **Contexto:**
+        {context}
+
+        **Pergunta do Usuário:**
+        {question}
+
+        **Sua Resposta Estruturada:**
+        """
+
+        # Este prompt é um pouco diferente, pois os metadados serão injetados no documento em si.
+        # O RetrievalQA vai pegar o `page_content` para o {context} e os metadados estarão disponíveis.
+        # A forma mais eficaz de usar metadados é um pouco mais complexa, mas para este caso,
+        # vamos confiar que o LLM é inteligente o suficiente para ver os metadados no documento recuperado.
+        # Para uma implementação mais robusta, usaríamos `create_stuff_documents_chain`.
+        # Por enquanto, vamos manter o RetrievalQA e ajustar o prompt para ser mais direto.
+
+        # Simplificando o prompt para o RetrievalQA padrão
+        prompt_template_final = """Com base no contexto abaixo, responda à pergunta.
+        
         Contexto: {context}
-
         Pergunta: {question}
-        Resposta:"""
+        
+        Siga o seguinte formato para a sua resposta:
+        **1. Código do Artigo:** [Extraia o código do artigo do contexto]
+        **2. Título do Artigo:** [Extraia o título do artigo do contexto]
+        **3. Descrição das Possíveis Causas:** [Descreva as causas com base no contexto]
+        **4. Descrição das Possíveis Soluções Aplicadas:** [Descreva as soluções com base no contexto]
+        """
 
-        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+        prompt = PromptTemplate(template=prompt_template_final, input_variables=["context", "question"])
 
         qa_chain_cache = RetrievalQA.from_chain_type(
             llm=llm,

@@ -1,8 +1,19 @@
 # Arquivos de ambiente virtual
+/venv/
 /web_app/venv/
 
-# Diretório de índice FAISS (gerado)
+# Diretórios de índice FAISS (gerados)
 /web_app/faiss_index/
+/web_app/faiss_index_estruturado/
+
+# Arquivos de dados gerados (não devem ser versionados)
+/web_app/base_conhecimento.csv
+/web_app/base_conhecimento_limpa.csv
+/scripts/analise.txt
+
+# Arquivo de ambiente - NUNCA versione chaves de API
+.env
+/web_app/.env
 
 # Arquivos de cache do Python
 **/__pycache__/

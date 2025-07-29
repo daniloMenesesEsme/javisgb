@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Adiciona o diretório do projeto ao PATH para encontrar a pasta 'chatbot'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

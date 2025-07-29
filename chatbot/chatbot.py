@@ -39,46 +39,6 @@ def inicializar_chatbot():
         print("Criando a cadeia de QA com o Gemini e o novo prompt...")
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
         
-        # Novo prompt que aproveita os metadados dos documentos
-        prompt_template = """Você é um assistente de IA especialista em análise de documentos de conhecimento.
-        Sua tarefa é usar os metadados e o conteúdo do documento fornecido para responder à pergunta do usuário de forma clara e estruturada.
-
-        **REGRAS ESTRITAS DE FORMATAÇÃO DA RESPOSTA:**
-        Sua resposta DEVE OBRIGATORIAMENTE usar as informações dos metadados e do contexto para preencher o seguinte formato Markdown.
-
-        **1. Código do Artigo:**
-        - {codigo_artigo}
-
-        **2. Título do Artigo:**
-        - {titulo_artigo}
-
-        **3. Descrição das Possíveis Causas:**
-        - Com base no contexto, liste em formato de tópicos as possíveis causas, problemas ou cenários descritos.
-
-        **4. Descrição das Possíveis Soluções Aplicadas:**
-        - Com base no contexto, liste em formato de tópicos as soluções, procedimentos ou recomendações propostas.
-
-        **INSTRUÇÕES IMPORTANTES:**
-        - **NÃO INVENTE INFORMAÇÃO.** Se o contexto não fornecer detalhes para as causas ou soluções, informe que a informação não está detalhada no documento.
-        - **SEMPRE USE PORTUGUÊS DO BRASIL.**
-        - **BASEIE-SE APENAS NO CONTEXTO ABAIXO.**
-
-        **Contexto:**
-        {context}
-
-        **Pergunta do Usuário:**
-        {question}
-
-        **Sua Resposta Estruturada:**
-        """
-
-        # Este prompt é um pouco diferente, pois os metadados serão injetados no documento em si.
-        # O RetrievalQA vai pegar o `page_content` para o {context} e os metadados estarão disponíveis.
-        # A forma mais eficaz de usar metadados é um pouco mais complexa, mas para este caso,
-        # vamos confiar que o LLM é inteligente o suficiente para ver os metadados no documento recuperado.
-        # Para uma implementação mais robusta, usaríamos `create_stuff_documents_chain`.
-        # Por enquanto, vamos manter o RetrievalQA e ajustar o prompt para ser mais direto.
-
         # Simplificando o prompt para o RetrievalQA padrão
         prompt_template_final = """Com base no contexto abaixo, responda à pergunta.
         

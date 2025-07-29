@@ -26,3 +26,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Ignorar node_modules, package-lock.json, package.json e requirements.txt na raiz
+node_modules/
+package-lock.json
+package.json
+requirements.txt

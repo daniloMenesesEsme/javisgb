@@ -1,4 +1,5 @@
 import os
+import re
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -39,18 +40,33 @@ def inicializar_chatbot():
         print("Criando a cadeia de QA com o Gemini e o novo prompt...")
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
         
-        # Simplificando o prompt para o RetrievalQA padrão
-        prompt_template_final = """Com base no contexto abaixo, responda à pergunta.
+        # NOVO PROMPT_TEMPLATE: Instruindo o modelo a extrair e formatar a resposta com base na "coluna" e tópicos
+        prompt_template_final = """Você é um assistente de atendimento especializado em artigos do Grupo Boticário.
+        Sua tarefa é fornecer respostas precisas e detalhadas com base EXCLUSIVAMENTE no contexto fornecido.
         
+        **INSTRUÇÕES DE FORMATAÇÃO DA RESPOSTA:**
+        1.  **Código do Artigo:** Procure no contexto pela frase "Código e descrição do artigo". Se encontrar, extraia o código numérico associado a ela. Se não encontrar, use "Não Encontrado".
+        2.  **Título do Artigo:** Se encontrou o "Código e descrição do artigo", extraia a descrição (título) associada a ele. Caso contrário, use "Não Encontrado".
+        3.  **Tópico/Procedimento:** Tente identificar um tópico ou subtópico relevante no contexto que se relacione diretamente com a pergunta. Se não for possível identificar um tópico claro, use "Informações Gerais" ou "Página: [Número da Página]" (o número da página pode ser obtido do metadata do documento, se disponível).
+        4.  **Formato da Resposta:** Sua resposta DEVE seguir o formato EXATO abaixo, utilizando Markdown para organização:
+
+            ```markdown
+            ## Informações do Artigo
+            **Código do Artigo:** [Código extraído ou "Não Encontrado"]
+            **Título do Artigo:** [Título extraído ou "Não Encontrado"]
+            **Tópico:** [Tópico inferido ou "Informações Gerais" ou "Página: X"]
+
+            ## Descrição do Procedimento
+            [Sua resposta detalhada e passo a passo, baseada no contexto, explicando o procedimento que o analista deve realizar para resolver o problema. Utilize listas numeradas ou com marcadores (bullet points) para procedimentos, se aplicável.]
+            ```
+
+        Se a informação exata para a pergunta não estiver no contexto fornecido, diga claramente "Não encontrei a informação específica para esta pergunta nos documentos disponíveis."
+        Responda sempre de forma clara, objetiva e EXCLUSIVAMENTE em português do Brasil.
+
         Contexto: {context}
         Pergunta: {question}
         
-        Siga o seguinte formato para a sua resposta:
-        **1. Código do Artigo:** [Extraia o código do artigo do contexto]
-        **2. Título do Artigo:** [Extraia o título do artigo do contexto]
-        **3. Descrição das Possíveis Causas:** [Descreva as causas com base no contexto]
-        **4. Descrição das Possíveis Soluções Aplicadas:** [Descreva as soluções com base no contexto]
-        """
+        Resposta detalhada em português do Brasil:"""
 
         prompt = PromptTemplate(template=prompt_template_final, input_variables=["context", "question"])
 
@@ -71,6 +87,7 @@ def inicializar_chatbot():
 def get_chatbot_answer(question):
     """
     Recebe uma pergunta e retorna a resposta do chatbot.
+    A formatação da fonte é feita diretamente pelo modelo via prompt.
     Retorna uma tupla (success, result).
     """
     if qa_chain_cache is None:
@@ -79,8 +96,11 @@ def get_chatbot_answer(question):
     try:
         print(f"Recebendo pergunta: {question}")
         resposta = qa_chain_cache.invoke({"query": question})
-        print(f"Resposta gerada: {resposta['result']}")
-        return True, resposta["result"]
+        
+        final_response_text = resposta["result"]
+
+        print(f"Resposta gerada: {final_response_text}")
+        return True, final_response_text
     except Exception as e:
         error_message = f"Ocorreu um erro ao processar a pergunta: {e}"
         print(error_message)

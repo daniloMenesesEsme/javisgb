@@ -1,18 +1,23 @@
 import os
+import re
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.output_parsers import StrOutputParser
 
 # Cache para armazenar a cadeia de QA
 qa_chain_cache = None
 
+def format_docs(docs):
+    """Função auxiliar para formatar os documentos recuperados em uma única string."""
+    return "\n\n".join(doc.page_content for doc in docs)
+
 def inicializar_chatbot():
     """
-    Carrega o índice FAISS pré-construído e inicializa a cadeia de QA.
-    Retorna True em caso de sucesso, False em caso de falha.
+    Carrega o índice FAISS e inicializa a cadeia de QA usando LCEL.
     """
     global qa_chain_cache
     try:
@@ -22,123 +27,82 @@ def inicializar_chatbot():
             return False
         genai.configure(api_key=api_key)
 
-        # Caminho para o novo índice estruturado
         caminho_indice = os.path.join(os.path.dirname(__file__), "..", "web_app", "faiss_index_estruturado")
 
         if not os.path.isdir(caminho_indice):
-            print("-" * 80)
-            print(f"Erro: O diretório do índice estruturado '{caminho_indice}' não foi encontrado.")
-            print("Por favor, execute o script 'python web_app/criar_indice_estruturado.py' primeiro.")
-            print("-" * 80)
+            print(f"Erro: O diretório do índice '{caminho_indice}' não foi encontrado.")
             return False
 
-        print("Carregando índice FAISS estruturado local...")
+        print("Carregando índice FAISS...")
         embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         vectorstore = FAISS.load_local(caminho_indice, embeddings, allow_dangerous_deserialization=True)
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
-        print("Criando a cadeia de QA com o Gemini e o novo prompt...")
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
+        print("Criando a cadeia de QA com LCEL para streaming...")
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3, streaming=True)
         
-        # Novo prompt que aproveita os metadados dos documentos
-        prompt_template = """Você é um assistente de IA especialista em análise de documentos de conhecimento.
-        Sua tarefa é usar os metadados e o conteúdo do documento fornecido para responder à pergunta do usuário de forma clara e estruturada.
+        prompt_template = "Você é um assistente de atendimento especializado em artigos do Grupo Boticário. Sua tarefa é fornecer respostas precisas e detalhadas com base EXCLUSIVAMENTE no contexto fornecido. Se a informação exata para a pergunta não estiver no contexto, diga claramente \"Não encontrei a informação específica para esta pergunta nos documentos disponíveis.\" Responda sempre de forma clara, objetiva e EXCLUSIVAMENTE em português do Brasil. **Contexto:** {context} **Pergunta do Usuário:** {question} **Sua Resposta Estruturada:**"
+        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
 
-        **REGRAS ESTRITAS DE FORMATAÇÃO DA RESPOSTA:**
-        Sua resposta DEVE OBRIGATORIAMENTE usar as informações dos metadados e do contexto para preencher o seguinte formato Markdown.
-
-        **1. Código do Artigo:**
-        - {codigo_artigo}
-
-        **2. Título do Artigo:**
-        - {titulo_artigo}
-
-        **3. Descrição das Possíveis Causas:**
-        - Com base no contexto, liste em formato de tópicos as possíveis causas, problemas ou cenários descritos.
-
-        **4. Descrição das Possíveis Soluções Aplicadas:**
-        - Com base no contexto, liste em formato de tópicos as soluções, procedimentos ou recomendações propostas.
-
-        **INSTRUÇÕES IMPORTANTES:**
-        - **NÃO INVENTE INFORMAÇÃO.** Se o contexto não fornecer detalhes para as causas ou soluções, informe que a informação não está detalhada no documento.
-        - **SEMPRE USE PORTUGUÊS DO BRASIL.**
-        - **BASEIE-SE APENAS NO CONTEXTO ABAIXO.**
-
-        **Contexto:**
-        {context}
-
-        **Pergunta do Usuário:**
-        {question}
-
-        **Sua Resposta Estruturada:**
-        """
-
-        # Este prompt é um pouco diferente, pois os metadados serão injetados no documento em si.
-        # O RetrievalQA vai pegar o `page_content` para o {context} e os metadados estarão disponíveis.
-        # A forma mais eficaz de usar metadados é um pouco mais complexa, mas para este caso,
-        # vamos confiar que o LLM é inteligente o suficiente para ver os metadados no documento recuperado.
-        # Para uma implementação mais robusta, usaríamos `create_stuff_documents_chain`.
-        # Por enquanto, vamos manter o RetrievalQA e ajustar o prompt para ser mais direto.
-
-        # Simplificando o prompt para o RetrievalQA padrão
-        prompt_template_final = """Com base no contexto abaixo, responda à pergunta.
-        
-        Contexto: {context}
-        Pergunta: {question}
-        
-        Siga o seguinte formato para a sua resposta:
-        **1. Código do Artigo:** [Extraia o código do artigo do contexto]
-        **2. Título do Artigo:** [Extraia o título do artigo do contexto]
-        **3. Descrição das Possíveis Causas:** [Descreva as causas com base no contexto]
-        **4. Descrição das Possíveis Soluções Aplicadas:** [Descreva as soluções com base no contexto]
-        """
-
-        prompt = PromptTemplate(template=prompt_template_final, input_variables=["context", "question"])
-
-        qa_chain_cache = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": prompt}
+        rag_chain_from_docs = (
+            RunnablePassthrough.assign(context=(lambda x: format_docs(x["source_documents"])))
+            | prompt
+            | llm
+            | StrOutputParser()
         )
-        print("Chatbot inicializado com sucesso a partir do índice local!")
+
+        qa_chain_cache = RunnableParallel(
+            {
+                "source_documents": retriever,
+                "question": RunnablePassthrough()
+            }
+        ).assign(answer=rag_chain_from_docs)
+        
+        print("Chatbot inicializado com sucesso para streaming!")
         return True
 
     except Exception as e:
         print(f"Ocorreu um erro durante a inicialização do chatbot: {e}")
         return False
 
-def get_chatbot_answer(question):
+def get_chatbot_answer_stream(question):
     """
-    Recebe uma pergunta e retorna a resposta do chatbot.
-    Retorna uma tupla (success, result).
+    Recebe uma pergunta e retorna um gerador para a resposta e as fontes.
     """
     if qa_chain_cache is None:
-        return False, "O chatbot não foi inicializado corretamente."
-    
+        yield "data: {\"error\": \"O chatbot não foi inicializado corretamente.\"}\n\n"
+        return
+
     try:
-        print(f"Recebendo pergunta: {question}")
-        resposta = qa_chain_cache.invoke({"query": question})
-        print(f"Resposta gerada: {resposta['result']}")
-        return True, resposta["result"]
+        stream = qa_chain_cache.stream(question)
+        # Primeiro, processa as fontes
+        first_chunk = next(stream)
+        source_docs = first_chunk.get("source_documents", [])
+        
+        unique_sources = []
+        seen_sources = set()
+        for doc in source_docs:
+            source_file = doc.metadata.get('source_file', 'Origem desconhecida')
+            if source_file not in seen_sources:
+                unique_sources.append({
+                    "title": doc.metadata.get('article_title', 'N/A'),
+                    "source_file": source_file
+                })
+                seen_sources.add(source_file)
+        
+        import json
+        yield f"data: {json.dumps({'sources': unique_sources})}\n\n"
+
+        # Envia o primeiro pedaço da resposta
+        if 'answer' in first_chunk:
+            yield f"data: {json.dumps({'token': first_chunk['answer']})}\n\n"
+
+        # Envia o resto da resposta em streaming
+        for chunk in stream:
+            if 'answer' in chunk:
+                yield f"data: {json.dumps({'token': chunk['answer']})}\n\n"
+
     except Exception as e:
         error_message = f"Ocorreu um erro ao processar a pergunta: {e}"
         print(error_message)
-        return False, error_message
-
-# O bloco abaixo serve para testar o chatbot de forma independente
-if __name__ == '__main__':
-    if inicializar_chatbot():
-        print("\n--- Chatbot de Conhecimento (Teste Local) ---")
-        print("Digite 'sair' para terminar.")
-        while True:
-            pergunta = input("\nSua pergunta: ")
-            if pergunta.lower() == 'sair':
-                break
-            
-            success, resposta = get_chatbot_answer(pergunta)
-            if success:
-                print("\nResposta:")
-                print(resposta)
-            else:
-                print(f"Erro: {resposta}")
+        yield f"data: {json.dumps({'error': error_message})}\n\n"

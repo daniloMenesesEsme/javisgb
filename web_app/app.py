@@ -1,58 +1,78 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os
 import sys
+import json
+import csv
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Adiciona o diretório do projeto ao PATH para encontrar a pasta 'chatbot'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Importa as funções refatoradas do módulo chatbot
-from chatbot.chatbot import inicializar_chatbot, get_chatbot_answer
+from chatbot.chatbot import inicializar_chatbot, get_chatbot_answer_stream
 
 app = Flask(__name__)
-CORS(app)  # Habilita CORS para permitir requisições do frontend
+CORS(app)
 
-# Flag para verificar se o chatbot foi inicializado com sucesso
 chatbot_pronto = False
+FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), 'feedback.csv')
 
 @app.route('/')
 def home():
-    """Rota básica para verificar se o backend está no ar."""
     return "Backend do Chatbot está funcionando!"
 
-@app.route('/chat', methods=['POST'])
+# Rota de streaming agora usa GET e lê a mensagem dos argumentos da URL
+@app.route('/chat', methods=['GET'])
 def chat():
-    """Recebe perguntas do frontend e retorna a resposta do chatbot."""
     if not chatbot_pronto:
-        return jsonify({"error": "O Chatbot ainda não está pronto. Por favor, aguarde um momento."}), 503
+        def error_stream():
+            yield f'data: {json.dumps({"error": "O Chatbot ainda não está pronto."})}
 
-    data = request.get_json()
-    pergunta = data.get('message')
+'
+        return Response(error_stream(), mimetype='text/event-stream')
+
+    pergunta = request.args.get('message')
 
     if not pergunta:
-        return jsonify({"error": "Nenhuma mensagem foi fornecida."}), 400
+        def error_stream():
+            yield f'data: {json.dumps({"error": "Nenhuma mensagem foi fornecida."})}
 
-    # Usa a função centralizada para obter a resposta
-    success, result = get_chatbot_answer(pergunta)
+'
+        return Response(error_stream(), mimetype='text/event-stream')
 
-    if success:
-        return jsonify({"response": result})
-    else:
-        # Retorna o erro que ocorreu dentro do chatbot
-        return jsonify({"error": result}), 500
+    return Response(get_chatbot_answer_stream(pergunta), mimetype='text/event-stream')
+
+@app.route('/feedback', methods=['POST'])
+def feedback():
+    try:
+        data = request.get_json()
+        question = data.get('question')
+        answer = data.get('answer')
+        feedback_type = data.get('feedback')
+
+        if not all([question, answer, feedback_type]):
+            return jsonify({"status": "error", "message": "Dados de feedback incompletos."}), 400
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        row = [timestamp, question, answer, feedback_type]
+
+        file_exists = os.path.isfile(FEEDBACK_FILE)
+        with open(FEEDBACK_FILE, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["Timestamp", "Question", "Answer", "Feedback"])
+            writer.writerow(row)
+
+        return jsonify({"status": "success", "message": "Feedback recebido com sucesso!"})
+    except Exception as e:
+        print(f"Erro ao salvar feedback: {e}")
+        return jsonify({"status": "error", "message": "Erro interno ao salvar feedback."}), 500
 
 if __name__ == '__main__':
-    # Inicializa o chatbot ao iniciar o servidor Flask
     print("--- Iniciando Servidor Flask e Chatbot ---")
     chatbot_pronto = inicializar_chatbot()
     if chatbot_pronto:
         print("--- Servidor pronto para receber requisições --- ")
-        # O modo debug=False é mais seguro para produção, mas para desenvolvimento, True é útil.
-        # Use a porta 5001 para evitar conflitos com a porta 5000 padrão.
         app.run(host='0.0.0.0', port=5001, debug=True)
     else:
         print("!!! Falha ao inicializar o chatbot. O servidor não será iniciado. !!!")
-        print("Por favor, verifique as configurações, especialmente a variável de ambiente GOOGLE_API_KEY.")

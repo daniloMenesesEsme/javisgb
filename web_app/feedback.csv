@@ -496,3 +496,90 @@ Para lojas All Free ( técnica da Zebra.
 
 ### **Informações Adicionais:**
 Para lojas All Free (fora da rede Boticário), o suporte de infraestrutura é de responsabilidade do franqueado.  O modelo de impressora GC420T não tem mais suporte a partir do Ciclo 0125.  A instalação em computadores fora da rede Boticário é de responsabilidade da franquiafora da rede Boticário), o suporte de infraestrutura é de responsabilidade do franqueado.  O modelo de impressora GC420T não tem mais suporte a partir do Ciclo 0125.  A instalação em computadores fora da rede Boticário é de responsabilidade da franquia; a CSF fornece apenas orientação.  Consulte a extranet para comunicados relevantes.; a CSF fornece apenas orientação.  Consulte a extranet para comunicados relevantes.",positive
+2025-08-02 14:46:58,Erro no SAT,"#### 1. Código do Artigo: 9727, 3 1. Código do Artigo: 9727, 31702, 31703, 3171702, 31703, 31713
+
+## 2. Título do Artigo:  Soluções para Falhas em SAT e MFE
+
+## 3. Descrição das Prin13
+
+## 2. Título do Artigo:  Soluções para Falhas em SAT e MFE
+
+## 3. Descrição das Principais Causas:
+
+**⚙️ CONFIGURAÇÃO (Setup)**
+**• Causa 1: Problemas de Configuração do SAT**
+   -cipais Causas:
+
+**⚙️ CONFIGURAÇÃO (Setup)**
+**• Causa 1: Problemas de Configuração do SAT**
+   - Descrição: Erros de configuração do SAT no PDV (Omnishop, Linx, Totvs), incluindo problemas com a porta COM, tipo de certificado (AC-SAT-SEFAZ), código de ativação, e Descrição: Erros de configuração do SAT no PDV (Omnishop, Linx, Totvs), incluindo problemas com a porta COM, tipo de certificado (AC-SAT-SEFAZ), código de ativação, e vinculação com o aplicativo comercial.  Problemas com a instalação e ativação do driver do SAT (Gertec, Elgin, Bematech).
+   - Referência: Artigos 9727, 31702 vinculação com o aplicativo comercial.  Problemas com a instalação e ativação do driver do SAT (Gertec, Elgin, Bematech).
+   - Referência: Artigos 9727, 31702, 31703, 31713
+
+**🔧 HARDWARE (Físicas)**
+**• Causa 2: Falha de Hardware do SAT**
+   - Descrição:  Problemas físicos no SAT, como mau funcionamento dos LEDs indicadores, problemas na porta USB, fal, 31703, 31713
+
+**🔧 HARDWARE (Físicas)**
+**• Causa 2: Falha de Hardware do SAT**
+   - Descrição:  Problemas físicos no SAT, como mau funcionamento dos LEDs indicadores, problemas na porta USB, falha na comunicação com a rede,  bloqueio do SAT por falta de comunicação ou erro de hardware.
+   - Referência: Artigos 9727, 31702, 31703, 31713
+
+**🌐 CONECTIVIDADE (Redeha na comunicação com a rede,  bloqueio do SAT por falta de comunicação ou erro de hardware.
+   - Referência: Artigos 9727, 31702, 31703, 31713
+
+**🌐 CONECTIVIDADE (Rede)**
+**• Causa 3: Problemas de Conectividade**
+   - Descrição:  Falha na comunicação do SAT com a internet (problemas de rede, cabo de rede, roteador Meraki).  Erro de comunicação com a SEFAZ.
+   - Referência: Artigos )**
+**• Causa 3: Problemas de Conectividade**
+   - Descrição:  Falha na comunicação do SAT com a internet (problemas de rede, cabo de rede, roteador Meraki).  Erro de comunicação com a SEFAZ.
+   - Referência: Artigos 9727, 31702, 31703, 31713
+
+
+## 4. Soluções Consolidadas por Prioridade:
+
+### **🚀 SOLUÇÃO RÁPIDA (1º Tentar)**
+1. **Verificação Inicial:** Ver9727, 31702, 31703, 31713
+
+
+## 4. Soluções Consolidadas por Prioridade:
+
+### **🚀 SOLUÇÃO RÁPIDA (1º Tentar)**
+1. **Verificação Inicial:** Verificar se o SAT está ligado e conectado corretamente à porta USB do computador (não em HUB USB) e à rede. Verificar os LEDs indicadores do SAT para identificar possíveis erros.  Verificar a conexão de internet. Reiniciar o computador e o SAT.
+2. **Ação Imediata:**  Verificar se o SAT está ligado e conectado corretamente à porta USB do computador (não em HUB USB) e à rede. Verificar os LEDs indicadores do SAT para identificar possíveis erros.  Verificar a conexão de internet. Reiniciar o computador e o SAT.
+2. **Ação Imediata:**  Verificar se o driver do SAT está instalado e atualizado.  Reiniciar o aplicativo comercial (PDV). Consultar a documentação do fabricante do SAT para códigos de erro.
+
+### **🔧 SOLUÇÃO TÉCNICA (2º Nível)**
+1. **Diagnóstico:** Utilizar o aplicativo de diagnóstico do fabricanteificar se o driver do SAT está instalado e atualizado.  Reiniciar o aplicativo comercial (PDV). Consultar a documentação do fabricante do SAT para códigos de erro.
+
+### **🔧 SOLUÇÃO TÉCNICA (2º Nível)**
+1. **Diagnóstico:** Utilizar o aplicativo de diagnóstico do fabricante do SAT para identificar o problema. Verificar a configuração do SAT no PDV (porta COM, tipo de certificado, etc.).
+2. **Configuração:** Reinstalar o driver do SAT.  Ajustar as configurações do SAT no PDV de acordo com a documentação do fabricante e do sistema de PD do SAT para identificar o problema. Verificar a configuração do SAT no PDV (porta COM, tipo de certificado, etc.).
+2. **Configuração:** Reinstalar o driver do SAT.  Ajustar as configurações do SAT no PDV de acordo com a documentação do fabricante e do sistema de PDV.
+3. **Teste:** Realizar um teste de emissão de cupom fiscal após as configurações.
+
+### **📞 ESCALAÇÃO (3º Nível)**
+**Para AERO:** Escalar para a equipe GBBS.
+**Para Franquias:** Abrir chamado na fila apropriada (V.
+3. **Teste:** Realizar um teste de emissão de cupom fiscal após as configurações.
+
+### **📞 ESCALAÇÃO (3º Nível)**
+**Para AERO:** Escalar para a equipe GBBS.
+**Para Franquias:** Abrir chamado na fila apropriada (TI - Franqueado - suporte lojas N2,  Dell - Lojas Próprias, etc., dependendo do sistema de PDV e da natureza do problema).  Fornecer todas as informações relevantes, incluindo prints de tela e códigos de erro.
+
+**⚡ Tempo Estimado:** 5-3TI - Franqueado - suporte lojas N2,  Dell - Lojas Próprias, etc., dependendo do sistema de PDV e da natureza do problema).  Fornecer todas as informações relevantes, incluindo prints de tela e códigos de erro.
+
+**⚡ Tempo Estimado:** 5-30 minutos (dependendo da complexidade do problema e da necessidade de escalação).
+**📋 Categorização:**  Macro: Equipamento Fiscal; Submotivo: Falha SAT;  (Especificar o fabricante do SAT se necessário)
+
+### **Informações Adicionais:**
+* A solução para problemas de SAT0 minutos (dependendo da complexidade do problema e da necessidade de escalação).
+**📋 Categorização:**  Macro: Equipamento Fiscal; Submotivo: Falha SAT;  (Especificar o fabricante do SAT se necessário)
+
+### **Informações Adicionais:**
+* A solução para problemas de SAT pode variar dependendo do fabricante (Gertec, Elgin, Bematech) e do sistema de PDV (Omnishop, Linx, Totvs).
+* Consultar a documentação do fabricante do SAT e do sistema de PDV para obter informações detalhadas sobre a configuração e solução de problemas.
+* pode variar dependendo do fabricante (Gertec, Elgin, Bematech) e do sistema de PDV (Omnishop, Linx, Totvs).
+* Consultar a documentação do fabricante do SAT e do sistema de PDV para obter informações detalhadas sobre a configuração e solução de problemas.
+* É importante registrar todas as ações realizadas e os resultados obtidos para facilitar a resolução do problema e a comunicação com o suporte técnico. É importante registrar todas as ações realizadas e os resultados obtidos para facilitar a resolução do problema e a comunicação com o suporte técnico.",positive

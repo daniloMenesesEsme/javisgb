@@ -1,8 +1,4 @@
 {
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "python scripts/processar_documentos_pypdf.py && python scripts/limpar_dados.py && python web_app/criar_indice_estruturado.py"
-  },
   "deploy": {
     "startCommand": "gunicorn web_app.app:app",
     "healthcheckPath": "/",

@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import csv
+import subprocess
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -17,6 +18,38 @@ CORS(app)
 
 chatbot_pronto = False
 FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), 'feedback.csv')
+
+def verificar_e_processar_dados():
+    """Verifica se os dados foram processados, se não, executa os scripts"""
+    base_conhecimento_path = os.path.join(os.path.dirname(__file__), 'base_conhecimento_precisao.csv')
+    faiss_index_path = os.path.join(os.path.dirname(__file__), 'faiss_index_estruturado')
+    
+    if not os.path.exists(base_conhecimento_path) or not os.path.exists(faiss_index_path):
+        print("🔧 Primeira execução: Processando dados...")
+        
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        
+        try:
+            # Processar PDFs
+            print("📄 Processando PDFs...")
+            subprocess.run([sys.executable, 'scripts/processar_documentos_pypdf.py'], 
+                         cwd=root_dir, check=True)
+            
+            # Limpar dados
+            print("🧹 Limpando dados...")
+            subprocess.run([sys.executable, 'scripts/limpar_dados.py'], 
+                         cwd=root_dir, check=True)
+            
+            # Criar índice FAISS
+            print("🔍 Criando índice FAISS...")
+            subprocess.run([sys.executable, 'web_app/criar_indice_estruturado.py'], 
+                         cwd=root_dir, check=True)
+            
+            print("✅ Processamento concluído!")
+            
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Erro no processamento: {e}")
+            raise e
 
 @app.route('/')
 def home():
@@ -88,6 +121,10 @@ def feedback():
 
 if __name__ == '__main__':
     print("--- Iniciando Servidor Flask e Chatbot ---")
+    
+    # Verificar e processar dados se necessário
+    verificar_e_processar_dados()
+    
     chatbot_pronto = inicializar_chatbot()
     if chatbot_pronto:
         print("--- Servidor pronto para receber requisições --- ")

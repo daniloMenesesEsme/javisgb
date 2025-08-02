@@ -51,6 +51,15 @@ def verificar_e_processar_dados():
             print(f"❌ Erro no processamento: {e}")
             raise e
 
+# Inicialização automática para deploy
+print("--- Iniciando Servidor Flask e Chatbot ---")
+verificar_e_processar_dados()
+chatbot_pronto = inicializar_chatbot()
+if chatbot_pronto:
+    print("--- Chatbot inicializado com sucesso ---")
+else:
+    print("!!! Aviso: Falha ao inicializar o chatbot !!!")
+
 @app.route('/')
 def home():
     return "Backend do Chatbot está funcionando!"
@@ -119,15 +128,16 @@ def feedback():
         print(f"Erro ao salvar feedback: {e}")
         return jsonify({"status": "error", "message": "Erro interno ao salvar feedback."}), 500
 
-if __name__ == '__main__':
-    print("--- Iniciando Servidor Flask e Chatbot ---")
-    
-    # Verificar e processar dados se necessário
-    verificar_e_processar_dados()
-    
-    chatbot_pronto = inicializar_chatbot()
-    if chatbot_pronto:
-        print("--- Servidor pronto para receber requisições --- ")
-        app.run(host='0.0.0.0', port=5001, debug=True)
-    else:
-        print("!!! Falha ao inicializar o chatbot. O servidor não será iniciado. !!!")
+# Inicialização movida para o topo para funcionar com gunicorn
+# if __name__ == '__main__':
+#     print("--- Iniciando Servidor Flask e Chatbot ---")
+#     
+#     # Verificar e processar dados se necessário
+#     verificar_e_processar_dados()
+#     
+#     chatbot_pronto = inicializar_chatbot()
+#     if chatbot_pronto:
+#         print("--- Servidor pronto para receber requisições --- ")
+#         app.run(host='0.0.0.0', port=5001, debug=True)
+#     else:
+#         print("!!! Falha ao inicializar o chatbot. O servidor não será iniciado. !!!")

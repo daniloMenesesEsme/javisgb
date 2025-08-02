@@ -1,0 +1,20 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="javisgb-chatbot",
+    version="1.0.0",
+    packages=find_packages(),
+    install_requires=[
+        "Flask==2.3.3",
+        "Flask-Cors==4.0.0",
+        "langchain==0.3.27",
+        "langchain-community==0.3.27",
+        "langchain-google-genai==2.0.10",
+        "pypdf",
+        "faiss-cpu",
+        "google-generativeai",
+        "python-dotenv",
+        "pandas>=1.5.0",
+        "gunicorn>=20.1.0"
+    ]
+)

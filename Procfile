@@ -1,1 +1,1 @@
-web: gunicorn web_app.app:app --bind 0.0.0.0:$PORT
+web: python -m pip install -r requirements.txt && python web_app/app.py

@@ -128,16 +128,15 @@ def feedback():
         print(f"Erro ao salvar feedback: {e}")
         return jsonify({"status": "error", "message": "Erro interno ao salvar feedback."}), 500
 
-# Inicialização movida para o topo para funcionar com gunicorn
-# if __name__ == '__main__':
-#     print("--- Iniciando Servidor Flask e Chatbot ---")
-#     
-#     # Verificar e processar dados se necessário
-#     verificar_e_processar_dados()
-#     
-#     chatbot_pronto = inicializar_chatbot()
-#     if chatbot_pronto:
-#         print("--- Servidor pronto para receber requisições --- ")
-#         app.run(host='0.0.0.0', port=5001, debug=True)
-#     else:
-#         print("!!! Falha ao inicializar o chatbot. O servidor não será iniciado. !!!")
+if __name__ == '__main__':
+    print("--- Iniciando Servidor Flask em Produção ---")
+    
+    # A inicialização já foi feita no topo do arquivo
+    port = int(os.environ.get('PORT', 5001))
+    
+    if chatbot_pronto:
+        print(f"--- Servidor rodando na porta {port} --- ")
+        app.run(host='0.0.0.0', port=port, debug=False)
+    else:
+        print("!!! Falha ao inicializar o chatbot. O servidor não será iniciado. !!!")
+        app.run(host='0.0.0.0', port=port, debug=False)  # Roda mesmo assim para debug

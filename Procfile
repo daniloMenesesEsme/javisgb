@@ -1,1 +1,1 @@
-web: gunicorn web_app.app:app
+web: gunicorn web_app.app:app --host 0.0.0.0 --port $PORT

@@ -1,9 +1,1 @@
-{
-  "deploy": {
-    "startCommand": "gunicorn web_app.app:app",
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 100,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
+{}

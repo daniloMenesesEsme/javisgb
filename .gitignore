@@ -27,8 +27,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Ignorar node_modules, package-lock.json, package.json e requirements.txt na raiz
+# Ignorar node_modules na raiz (mas manter requirements.txt para Railway)
 node_modules/
-package-lock.json
-package.json
-requirements.txt

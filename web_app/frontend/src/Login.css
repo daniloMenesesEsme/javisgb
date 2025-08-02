@@ -1,0 +1,102 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%);
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.login-form {
+    background-color: #ffffff;
+    padding: 48px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 36px;
+}
+
+.logo-container .logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    flex-shrink: 0;
+    display: block;
+}
+
+.login-form h2 {
+    margin: 0;
+    color: #264FEC;
+    font-size: 2.2em;
+    font-weight: 600;
+    background: linear-gradient(135deg, #264FEC 0%, #1a3cb8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: calc(100% - 20px);
+    padding: 12px 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: #264FEC;
+    box-shadow: 0 0 0 0.2rem rgba(38, 79, 236, 0.25);
+    outline: none;
+}
+
+.login-form button {
+    background: linear-gradient(135deg, #264FEC 0%, #1a3cb8 100%);
+    color: white;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(38, 79, 236, 0.3);
+}
+
+.login-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(38, 79, 236, 0.4);
+}
+
+.login-form button:active {
+    transform: translateY(0);
+}
+
+.error-message {
+    color: #e74c3c;
+    margin-bottom: 15px;
+    font-weight: 500;
+}

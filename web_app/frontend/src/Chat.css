@@ -1,7 +1,7 @@
 /* General Body and Container Styling */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f2f5;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%);
     margin: 0;
     display: flex;
     justify-content: center;
@@ -13,105 +13,209 @@ body {
     display: flex;
     flex-direction: column;
     height: 90vh;
-    max-width: 1500px;
-    width: 100%;
+    max-width: 1200px;
+    width: 95%;
     background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Connection Status Indicator */
 .connection-status {
-    padding: 10px 20px;
-    background-color: #e0f7fa;
-    color: #007bff;
-    font-size: 0.9em;
+    padding: 20px 24px;
+    background: linear-gradient(90deg, #264FEC 0%, #1a3cb8 100%);
+    color: white;
+    font-size: 1em;
+    font-weight: 500;
     text-align: center;
-    border-bottom: 1px solid #b3e5fc;
+    border-bottom: none;
+    box-shadow: 0 2px 8px rgba(38, 79, 236, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.connection-status::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 /* Message List Area */
 .message-list {
     flex-grow: 1;
-    padding: 20px;
+    padding: 24px;
     overflow-y: auto;
-    background-color: #fdfdfd;
-    border-bottom: 1px solid #eee;
+    background-color: #fafbfc;
+    border-bottom: 1px solid #e8eaed;
+    
+    /* Scrollbar personalizada */
+    scrollbar-width: thin;
+    scrollbar-color: #c4c9cc #f1f3f4;
+}
+
+.message-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.message-list::-webkit-scrollbar-track {
+    background: #f1f3f4;
+    border-radius: 3px;
+}
+
+.message-list::-webkit-scrollbar-thumb {
+    background: #c4c9cc;
+    border-radius: 3px;
+}
+
+.message-list::-webkit-scrollbar-thumb:hover {
+    background: #a8acaf;
 }
 
 /* Individual Message Styling */
 .message {
-    margin-bottom: 15px;
-    padding: 12px 18px;
+    margin-bottom: 16px;
+    padding: 16px 20px;
     border-radius: 20px;
-    max-width: 80%; /* Increased max-width for bot messages */
+    max-width: 80%;
     word-wrap: break-word;
     line-height: 1.6;
-    font-size: 16px;
+    font-size: 15px;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message.user {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #264FEC 0%, #1a3cb8 100%);
     color: white;
     align-self: flex-end;
     margin-left: auto;
-    border-bottom-right-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
-    max-width: 65%; /* Keep user messages a bit smaller */
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 4px 12px rgba(38, 79, 236, 0.3);
+    max-width: 65%;
+    font-weight: 500;
 }
 
 .message.bot {
-    background-color: #e9ecef;
-    color: #343a40;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
     align-self: flex-start;
     margin-right: auto;
-    border-bottom-left-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15);
+    border: 2px solid #2196f3;
+}
+
+/* Ensure general text in bot messages is readable */
+.message.bot p, .message.bot span, .message.bot div {
+    color: #0d47a1;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+.message.bot p {
+    margin: 8px 0;
+}
+
+.message.bot p:first-child {
+    margin-top: 0;
+}
+
+.message.bot p:last-child {
+    margin-bottom: 0;
 }
 
 /* --- Markdown Specific Styling --- */
 
 .message.bot h1, .message.bot h2, .message.bot h3 {
-    margin-top: 15px;
-    margin-bottom: 10px;
-    color: #0056b3;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 5px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    color: #1a3cb8;
+    border-bottom: 2px solid #264FEC;
+    padding-bottom: 8px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(26, 60, 184, 0.1);
+}
+
+.message.bot h2 {
+    color: #264FEC;
+    font-size: 1.3em;
+    background: linear-gradient(90deg, #264FEC, #1a3cb8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.message.bot h3 {
+    color: #1976d2;
+    font-size: 1.1em;
 }
 
 .message.bot strong {
-    color: #0056b3;
+    color: #1a3cb8;
+    font-weight: 700;
+    text-shadow: 0 1px 1px rgba(26, 60, 184, 0.1);
 }
 
 .message.bot ul,
 .message.bot ol {
     padding-left: 25px;
     margin: 10px 0;
+    color: #264FEC;
 }
 
 .message.bot li {
     margin-bottom: 8px;
+    color: #1a3cb8;
+    font-weight: 500;
 }
 
 /* Code Blocks */
 .message.bot pre {
-    background-color: #282c34; /* Dark background for code */
-    color: #abb2bf; /* Light text for code */
-    padding: 15px;
-    border-radius: 8px;
+    background: linear-gradient(135deg, #e8f0fe 0%, #d6e4ff 100%);
+    color: #1a3cb8;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #264FEC;
     overflow-x: auto;
-    font-family: 'Fira Code', 'Courier New', Courier, monospace;
-    font-size: 0.95em;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
     white-space: pre-wrap;
     word-wrap: break-word;
+    margin: 16px 0;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
 }
 
 .message.bot code {
-    font-family: 'Fira Code', 'Courier New', Courier, monospace;
-    background-color: rgba(0,0,0,0.05);
-    padding: 2px 4px;
-    border-radius: 4px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: 1px solid #bbdefb;
 }
 
 .message.bot pre code {
@@ -148,52 +252,229 @@ body {
 
 /* Blockquotes (for references) */
 .message.bot blockquote {
-    border-left: 4px solid #007bff;
-    padding-left: 15px;
-    margin: 15px 0;
-    color: #6c757d;
-    background-color: #f8f9fa;
-    border-radius: 0 8px 8px 0;
+    border-left: 4px solid #264FEC;
+    padding: 16px 20px;
+    margin: 20px 0;
+    color: #1a3cb8;
+    background: linear-gradient(135deg, #e8f0fe 0%, #d6e4ff 100%);
+    border-radius: 0 12px 12px 0;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(38, 79, 236, 0.1);
 }
 
 
 /* --- Input Form Styling --- */
 .input-form {
     display: flex;
-    padding: 15px 20px;
-    border-top: 1px solid #e0e0e0;
-    background-color: #ffffff;
-    gap: 10px;
+    padding: 20px 24px;
+    border-top: 1px solid #e8eaed;
+    background: linear-gradient(to top, #ffffff 0%, #fafbfc 100%);
+    gap: 12px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .input-form input {
     flex-grow: 1;
-    padding: 12px 18px;
-    border: 1px solid #ced4da;
+    width: 100%;
+    padding: 14px 20px;
+    border: 2px solid #e2e8f0;
     border-radius: 25px;
     outline: none;
-    font-size: 1em;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    font-size: 15px;
+    font-family: inherit;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.input-form input::placeholder {
+    color: #a0aec0;
+    font-weight: 400;
 }
 
 .input-form input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: #264FEC;
+    box-shadow: 0 0 0 0.2rem rgba(38, 79, 236, 0.25);
 }
 
 .input-form button {
-    padding: 12px 25px;
-    background-color: #007bff;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #264FEC 0%, #1a3cb8 100%);
     color: white;
     border: none;
     border-radius: 25px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(38, 79, 236, 0.3);
 }
 
 .input-form button:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(38, 79, 236, 0.4);
+}
+
+.input-form button:active {
+    transform: translateY(0);
+}
+
+/* --- Styling for Message Sources --- */
+
+.message-content {
+    /* Container for the main message text */
+}
+
+.message-sources {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #d1d9e1;
+    font-size: 0.85em;
+    color: #5a6470;
+}
+
+.message-sources strong {
+    color: #343a40;
+    font-weight: 600;
+}
+
+.message-sources ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.message-sources li {
+    margin-bottom: 5px;
+}
+
+.message-sources em {
+    color: #8795a1;
+    font-style: italic;
+}
+
+/* --- Feedback Buttons --- */
+
+.feedback-buttons {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #d1d9e1; 
+}
+
+.feedback-buttons button {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.feedback-buttons button:hover:not(:disabled) {
+    background-color: #e8f0fe;
+    border-color: #264FEC;
+    transform: scale(1.1);
+}
+
+.feedback-buttons button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.feedback-buttons button.selected {
+    border-color: #264FEC;
+    background-color: #e8f0fe;
+    color: #1a3cb8;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .chat-container {
+        height: 95vh;
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    .connection-status {
+        padding: 16px 20px;
+        font-size: 0.9em;
+    }
+    
+    .message-list {
+        padding: 16px;
+    }
+    
+    .message {
+        max-width: 90%;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .message.user {
+        max-width: 85%;
+    }
+    
+    .input-form {
+        padding: 16px 20px;
+        gap: 10px;
+    }
+    
+    .input-form input {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .input-form button {
+        padding: 12px 20px;
+        font-size: 0.9em;
+    }
+    
+    .message.bot h2 {
+        font-size: 1.2em;
+    }
+    
+    .message.bot h3 {
+        font-size: 1em;
+    }
+    
+    .message.bot pre {
+        padding: 16px;
+        font-size: 0.85em;
+        margin: 12px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .connection-status {
+        padding: 12px 16px;
+    }
+    
+    .message-list {
+        padding: 12px;  
+    }
+    
+    .message {
+        padding: 10px 14px;
+        margin-bottom: 12px;
+    }
+    
+    .input-form {
+        padding: 12px 16px;
+    }
+    
+    .input-form input {
+        padding: 10px 14px;
+    }
+    
+    .input-form button {
+        padding: 10px 16px;
+    }
 }

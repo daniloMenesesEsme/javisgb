@@ -23,7 +23,7 @@ def criar_e_salvar_indice_estruturado():
 
     # 2. Definir os caminhos
     project_root = os.path.abspath(os.path.dirname(__file__))
-    caminho_csv = os.path.join(project_root, 'base_conhecimento_limpa.csv')
+    caminho_csv = os.path.join(project_root, 'base_conhecimento_precisao.csv')
     caminho_indice_novo = os.path.join(project_root, 'faiss_index_estruturado')
 
     if not os.path.exists(caminho_csv):
@@ -46,7 +46,9 @@ def criar_e_salvar_indice_estruturado():
         # Os metadados são as informações que queremos recuperar junto com o resultado
         metadata = {
             'codigo_artigo': str(row.get('codigo_artigo', 'N/A')),
-            'titulo_artigo': str(row.get('titulo_artigo', 'N/A'))
+            'titulo_artigo': str(row.get('titulo_artigo', 'N/A')),
+            'article_title': str(row.get('titulo_artigo', 'N/A')),  # Compatibilidade com chatbot.py
+            'source_file': f"Artigo_{row.get('codigo_artigo', 'desconhecido')}.pdf"  # Arquivo fonte simulado
             # Adicione aqui outros campos do CSV que queira manter como metadados
         }
         documento = Document(page_content=page_content, metadata=metadata)

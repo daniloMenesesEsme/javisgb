@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
 import Login from './Login';
 import Chat from './Chat';
-import './Chat.css'; // Importando o CSS principal aqui
+import './App.css';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(null);
 
   const handleLogin = (user) => {
-    setIsLoggedIn(true);
     setUsername(user);
   };
 
   return (
     <div className="App">
-      {!isLoggedIn ? (
-        <Login onLogin={handleLogin} />
-      ) : (
+      {username ? (
         <Chat username={username} />
+      ) : (
+        <Login onLogin={handleLogin} />
       )}
     </div>
   );

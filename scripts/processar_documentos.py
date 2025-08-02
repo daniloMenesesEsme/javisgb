@@ -35,14 +35,24 @@ def processar_pdfs_para_csv():
             # Extrai todas as tabelas do PDF. 'lattice=True' é bom para tabelas com linhas visíveis.
             tabelas = tabula.read_pdf(pdf, pages='all', multiple_tables=True, lattice=True, pandas_options={'header': None})
             
-            if tabelas:
-                # Concatena todas as tabelas encontradas em um único DataFrame
-                df_pdf = pd.concat(tabelas, ignore_index=True)
-                lista_de_dataframes.append(df_pdf)
+            if tabelas and len(tabelas) > 0:
+                # Filtra tabelas vazias ou com dados insuficientes
+                tabelas_validas = [t for t in tabelas if not t.empty and len(t.columns) > 0]
+                if tabelas_validas:
+                    # Concatena todas as tabelas encontradas em um único DataFrame
+                    df_pdf = pd.concat(tabelas_validas, ignore_index=True)
+                    lista_de_dataframes.append(df_pdf)
+                    print(f"  -> Sucesso: {len(tabelas_validas)} tabela(s) extraída(s)")
+                else:
+                    print(f"  -> Aviso: Tabelas encontradas mas estão vazias em {os.path.basename(pdf)}")
             else:
-                print(f"  -> Aviso: Nenhuma tabela encontrada em {os.path.basename(pdf)}.")
+                print(f"  -> Aviso: Nenhuma tabela encontrada em {os.path.basename(pdf)}")
+        except FileNotFoundError:
+            print(f"  -> Erro: Arquivo não encontrado: {os.path.basename(pdf)}")
+        except PermissionError:
+            print(f"  -> Erro: Sem permissão para acessar: {os.path.basename(pdf)}")
         except Exception as e:
-            print(f"  -> Erro ao processar o arquivo {os.path.basename(pdf)}: {e}")
+            print(f"  -> Erro ao processar o arquivo {os.path.basename(pdf)}: {type(e).__name__}: {e}")
 
     if not lista_de_dataframes:
         print("Nenhuma tabela foi extraída de nenhum dos arquivos PDF. O arquivo CSV não será criado.")

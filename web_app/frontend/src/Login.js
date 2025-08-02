@@ -1,104 +1,86 @@
 import React, { useState } from 'react';
+import './Login.css'; // Certifique-se de que este arquivo CSS existe ou crie-o
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  
+  // URL base do backend
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Validação simples no frontend por enquanto
-    if (username === 'admin' && password === 'admin') {
-      onLogin(username);
-    } else {
-      setError('Usuário ou senha inválidos.');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      if (response.ok) {
+        onLogin(username);
+      } else {
+        setError('Usuário ou senha inválidos.');
+      }
+    } catch (error) {
+      // Fallback para desenvolvimento (remover em produção)
+      if (username === 'admin' && password === 'boticario2024') {
+        onLogin(username);
+      } else {
+        setError('Usuário ou senha inválidos.');
+      }
     }
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Login</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Usuário:</label>
+    <div className="login-container">
+      <form onSubmit={handleSubmit} className="login-form">
+        <div className="logo-container">
+          <img 
+            className="logo" 
+            src="/logo-boticario.png" 
+            alt="Grupo Boticário" 
+            width="80" 
+            height="80"
+            onError={(e) => {
+              // Fallback se não encontrar o PNG
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'block';
+            }}
+          />
+          <div className="logo-fallback" style={{display: 'none', fontSize: '60px'}}>🏪</div>
+          <h2>Grupo Boticário</h2>
+        </div>
+        <p style={{color: '#718096', marginBottom: '32px', fontSize: '1.1em'}}>
+          Assistente Virtual para Suporte
+        </p>
+        {error && <p className="error-message">{error}</p>}
+        <div className="form-group">
+          <label htmlFor="username">Usuário:</label>
           <input
             type="text"
+            id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            style={styles.input}
             required
           />
         </div>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Senha:</label>
+        <div className="form-group">
+          <label htmlFor="password">Senha:</label>
           <input
             type="password"
+            id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
             required
           />
         </div>
-        {error && <p style={styles.error}>{error}</p>}
-        <button type="submit" style={styles.button}>Entrar</button>
+        <button type="submit">Entrar</button>
       </form>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f0f2f5',
-    fontFamily: 'Arial, sans-serif',
-  },
-  title: {
-    color: '#333',
-    marginBottom: '20px',
-  },
-  form: {
-    backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '8px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    width: '300px',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    marginBottom: '5px',
-    color: '#555',
-    fontSize: '14px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '16px',
-  },
-  button: {
-    backgroundColor: '#007bff',
-    color: '#fff',
-    padding: '10px 15px',
-    border: 'none',
-    borderRadius: '4px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    marginTop: '10px',
-  },
-  error: {
-    color: 'red',
-    marginBottom: '10px',
-    fontSize: '14px',
-  },
-};
 
 export default Login;

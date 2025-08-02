@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Importa a função correta para streaming
 from chatbot.chatbot import inicializar_chatbot, get_chatbot_answer_stream
 
 app = Flask(__name__)
@@ -21,26 +22,43 @@ FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), 'feedback.csv')
 def home():
     return "Backend do Chatbot está funcionando!"
 
-# Rota de streaming agora usa GET e lê a mensagem dos argumentos da URL
 @app.route('/chat', methods=['GET'])
 def chat():
     if not chatbot_pronto:
         def error_stream():
-            yield f'data: {json.dumps({"error": "O Chatbot ainda não está pronto."})}
-
-'
+            error_data = {"error": "O Chatbot ainda não está pronto."}
+            yield "data: " + json.dumps(error_data) + "\n\n"
         return Response(error_stream(), mimetype='text/event-stream')
 
     pergunta = request.args.get('message')
 
     if not pergunta:
         def error_stream():
-            yield f'data: {json.dumps({"error": "Nenhuma mensagem foi fornecida."})}
-
-'
+            error_data = {"error": "Nenhuma mensagem foi fornecida."}
+            yield "data: " + json.dumps(error_data) + "\n\n"
         return Response(error_stream(), mimetype='text/event-stream')
 
     return Response(get_chatbot_answer_stream(pergunta), mimetype='text/event-stream')
+
+@app.route('/api/auth', methods=['POST'])
+def authenticate():
+    """Endpoint para autenticação de usuários"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        # Buscar credenciais das variáveis de ambiente
+        valid_username = os.environ.get('ADMIN_USERNAME', 'admin')
+        valid_password = os.environ.get('ADMIN_PASSWORD', 'boticario2024')
+        
+        if username == valid_username and password == valid_password:
+            return jsonify({"status": "success", "message": "Autenticação bem-sucedida"})
+        else:
+            return jsonify({"status": "error", "message": "Credenciais inválidas"}), 401
+    except Exception as e:
+        print(f"Erro na autenticação: {e}")
+        return jsonify({"status": "error", "message": "Erro interno de autenticação"}), 500
 
 @app.route('/feedback', methods=['POST'])
 def feedback():

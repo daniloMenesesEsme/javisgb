@@ -3,17 +3,23 @@ import re
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.output_parsers import StrOutputParser
+import json # Adicionado: Importa o módulo json
 
 # Cache para armazenar a cadeia de QA
 qa_chain_cache = None
 
+def format_docs(docs):
+    """Função auxiliar para formatar os documentos recuperados em uma única string."""
+    return "\n\n".join(doc.page_content for doc in docs)
+
 def inicializar_chatbot():
     """
-    Carrega o índice FAISS pré-construído e inicializa a cadeia de QA.
-    Retorna True em caso de sucesso, False em caso de falha.
+    Carrega o índice FAISS e inicializa a cadeia de QA usando LCEL,
+    configurada para retornar a resposta e os documentos de origem.
     """
     global qa_chain_cache
     try:
@@ -23,102 +29,206 @@ def inicializar_chatbot():
             return False
         genai.configure(api_key=api_key)
 
-        # Caminho para o novo índice estruturado
         caminho_indice = os.path.join(os.path.dirname(__file__), "..", "web_app", "faiss_index_estruturado")
 
         if not os.path.isdir(caminho_indice):
-            print("-" * 80)
-            print(f"Erro: O diretório do índice estruturado '{caminho_indice}' não foi encontrado.")
-            print("Por favor, execute o script 'python web_app/criar_indice_estruturado.py' primeiro.")
-            print("-" * 80)
+            print(f"Erro: O diretório do índice '{caminho_indice}' não foi encontrado.")
             return False
 
-        print("Carregando índice FAISS estruturado local...")
+        print("Carregando índice FAISS...")
         embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         vectorstore = FAISS.load_local(caminho_indice, embeddings, allow_dangerous_deserialization=True)
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 8})
 
-        print("Criando a cadeia de QA com o Gemini e o novo prompt...")
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.3)
+        print("Criando a cadeia de QA com LCEL para retornar fontes...")
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.02, streaming=True)
         
-        # NOVO PROMPT_TEMPLATE: Instruindo o modelo a extrair e formatar a resposta com base na "coluna" e tópicos
-        prompt_template_final = """Você é um assistente de atendimento especializado em artigos do Grupo Boticário.
-        Sua tarefa é fornecer respostas precisas e detalhadas com base EXCLUSIVAMENTE no contexto fornecido.
+        prompt_template = """Você é um assistente especializado em artigos técnicos do Grupo Boticário para orientação de franqueados.
+        Analise TODA a pergunta do usuário e CONSOLIDE informações similares para otimizar TMA/TME.
         
-        **INSTRUÇÕES DE FORMATAÇÃO DA RESPOSTA:**
-        1.  **Código do Artigo:** Procure no contexto pela frase "Código e descrição do artigo". Se encontrar, extraia o código numérico associado a ela. Se não encontrar, use "Não Encontrado".
-        2.  **Título do Artigo:** Se encontrou o "Código e descrição do artigo", extraia a descrição (título) associada a ele. Caso contrário, use "Não Encontrado".
-        3.  **Tópico/Procedimento:** Tente identificar um tópico ou subtópico relevante no contexto que se relacione diretamente com a pergunta. Se não for possível identificar um tópico claro, use "Informações Gerais" ou "Página: [Número da Página]" (o número da página pode ser obtido do metadata do documento, se disponível).
-        4.  **Formato da Resposta:** Sua resposta DEVE seguir o formato EXATO abaixo, utilizando Markdown para organização:
-
-            ```markdown
-            ## Informações do Artigo
-            **Código do Artigo:** [Código extraído ou "Não Encontrado"]
-            **Título do Artigo:** [Título extraído ou "Não Encontrado"]
-            **Tópico:** [Tópico inferido ou "Informações Gerais" ou "Página: X"]
-
-            ## Descrição do Procedimento
-            [Sua resposta detalhada e passo a passo, baseada no contexto, explicando o procedimento que o analista deve realizar para resolver o problema. Utilize listas numeradas ou com marcadores (bullet points) para procedimentos, se aplicável.]
-            ```
-
-        Se a informação exata para a pergunta não estiver no contexto fornecido, diga claramente "Não encontrei a informação específica para esta pergunta nos documentos disponíveis."
-        Responda sempre de forma clara, objetiva e EXCLUSIVAMENTE em português do Brasil.
-
-        Contexto: {context}
-        Pergunta: {question}
+        **REGRAS CRÍTICAS PARA CONSOLIDAÇÃO:**
+        1. ELIMINE repetições - agrupe informações similares em uma única entrada
+        2. PRIORIZE informações mais relevantes - máximo 5 causas principais
+        3. CONSOLIDE procedimentos similares - evite duplicações
+        4. USE hierarquia: Principais → Secundárias → Técnicas
+        5. AGRUPE por categoria: Hardware, Software, Configuração, Rede
+        6. SEJA CONCISO - foque no essencial para reduzir tempo de leitura
+        7. UNIFIQUE terminologia - use termos consistentes
         
-        Resposta detalhada em português do Brasil:"""
+        **FORMATO OBRIGATÓRIO - Layout Azul Profissional:**
+        
+        ## 1. Código do Artigo: 
+        [Extraia qualquer código numérico encontrado no contexto relacionado à pergunta]
+        
+        ## 2. Título do Artigo: 
+        [Extraia o título mais relevante do contexto, mesmo que parcial]
+        
+        ## 3. Descrição das Principais Causas:
+        
+        **🔧 HARDWARE (Físicas)**
+        **• Causa 1: [Nome Consolidado]**
+           - Descrição: [Agrupe problemas físicos similares]
+           - Referência: [Artigos principais]
+        
+        **💻 SOFTWARE (Sistema)**  
+        **• Causa 2: [Nome Consolidado]**
+           - Descrição: [Agrupe problemas de software similares]
+           - Referência: [Artigos principais]
+        
+        **⚙️ CONFIGURAÇÃO (Setup)**
+        **• Causa 3: [Nome Consolidado]**
+           - Descrição: [Agrupe problemas de configuração similares]  
+           - Referência: [Artigos principais]
+        
+        **🌐 CONECTIVIDADE (Rede)**
+        **• Causa 4: [Nome Consolidado]**
+           - Descrição: [Agrupe problemas de rede similares]
+           - Referência: [Artigos principais]
+        
+        *(MÁXIMO 5 CAUSAS CONSOLIDADAS - Elimine duplicações e agrupe similares)*
+        
+        ## 4. Soluções Consolidadas por Prioridade:
+        
+        ### **🚀 SOLUÇÃO RÁPIDA (1º Tentar)**
+        1. **Verificação Inicial:** [Consolidar verificações básicas similares]
+        2. **Ação Imediata:** [Consolidar soluções rápidas similares]
+        
+        ### **🔧 SOLUÇÃO TÉCNICA (2º Nível)**  
+        1. **Diagnóstico:** [Consolidar procedimentos de diagnóstico]
+        2. **Configuração:** [Consolidar ajustes técnicos]
+        3. **Teste:** [Consolidar validações]
+        
+        ### **📞 ESCALAÇÃO (3º Nível)**
+        **Para AERO:** [Consolidar procedimentos específicos AERO]
+        **Para Franquias:** [Consolidar orientações gerais]
+        
+        **⚡ Tempo Estimado:** [Indicar tempo para otimizar TMA]
+        **📋 Categorização:** [Macro/Submotivo para classificação]
+        
+        ### **Informações Adicionais:**
+        [Qualquer informação técnica relevante encontrada no contexto]
+        
+        **OTIMIZAÇÃO TMA/TME - REGRAS OBRIGATÓRIAS:**
+        - MÁXIMO 5 causas consolidadas (elimine repetições)
+        - MÁXIMO 6 soluções priorizadas (do mais rápido ao mais complexo)
+        - AGRUPE informações similares em categorias
+        - USE terminologia consistente (evite variações)
+        - INDIQUE tempo estimado para cada solução
+        - PRIORIZE soluções por eficácia comprovada
+        - ELIMINE informações redundantes entre artigos
+        
+        **CONSOLIDAÇÃO INTELIGENTE:** Se encontrar 10 causas similares, agrupe em 3 categorias principais.
+        **FOCO NO RESULTADO:** Analista deve ter resposta clara em máximo 2 minutos de leitura.
 
-        prompt = PromptTemplate(template=prompt_template_final, input_variables=["context", "question"])
+        **Contexto Disponível:**
+        {context}
 
-        qa_chain_cache = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": prompt}
+        **Pergunta do Analista:**
+        {question}
+
+        **Resposta Estruturada:**
+        """
+        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+
+        # Define a cadeia que formata o input para o LLM
+        rag_chain_from_docs = (
+            RunnablePassthrough.assign(context=(lambda x: format_docs(x["source_documents"])))
+            | prompt
+            | llm
+            | StrOutputParser()
         )
-        print("Chatbot inicializado com sucesso a partir do índice local!")
+
+        # Define a cadeia final que recupera os documentos e depois chama a cadeia acima
+        qa_chain_cache = RunnableParallel(
+            {
+                "source_documents": retriever,
+                "question": RunnablePassthrough()
+            }
+        ).assign(answer=rag_chain_from_docs)
+        
+        print("Chatbot inicializado com sucesso para streaming!")
         return True
 
     except Exception as e:
         print(f"Ocorreu um erro durante a inicialização do chatbot: {e}")
         return False
 
-def get_chatbot_answer(question):
+def get_chatbot_answer_stream(question):
     """
-    Recebe uma pergunta e retorna a resposta do chatbot.
-    A formatação da fonte é feita diretamente pelo modelo via prompt.
-    Retorna uma tupla (success, result).
+    Recebe uma pergunta e retorna um gerador para a resposta e as fontes.
     """
     if qa_chain_cache is None:
-        return False, "O chatbot não foi inicializado corretamente."
-    
-    try:
-        print(f"Recebendo pergunta: {question}")
-        resposta = qa_chain_cache.invoke({"query": question})
-        
-        final_response_text = resposta["result"]
+        yield "data: " + json.dumps({"error": "O chatbot não foi inicializado corretamente." }) + "\n\n"
+        return
 
-        print(f"Resposta gerada: {final_response_text}")
-        return True, final_response_text
+    try:
+        stream = qa_chain_cache.stream(question)
+        
+        # O primeiro chunk pode conter as fontes e/ou o início da resposta
+        first_chunk = next(stream)
+        
+        source_docs = first_chunk.get("source_documents", [])
+        unique_sources = []
+        seen_sources = set()
+        for doc in source_docs:
+            source_file = doc.metadata.get('source_file', 'Origem desconhecida')
+            if source_file not in seen_sources:
+                unique_sources.append({
+                    "title": doc.metadata.get('article_title', 'N/A'),
+                    "source_file": source_file
+                })
+                seen_sources.add(source_file)
+        
+        # Envia as fontes primeiro
+        yield "data: " + json.dumps({"sources": unique_sources}) + "\n\n"
+
+        # Envia o primeiro pedaço da resposta, se houver
+        if 'answer' in first_chunk:
+            yield "data: " + json.dumps({"token": first_chunk['answer']}) + "\n\n"
+
+        # Continua enviando o resto da resposta em streaming
+        for chunk in stream:
+            if 'answer' in chunk:
+                yield "data: " + json.dumps({"token": chunk['answer']}) + "\n\n"
+
     except Exception as e:
         error_message = f"Ocorreu um erro ao processar a pergunta: {e}"
         print(error_message)
-        return False, error_message
+        yield "data: " + json.dumps({"error": error_message}) + "\n\n"
 
-# O bloco abaixo serve para testar o chatbot de forma independente
+# Bloco de teste atualizado
 if __name__ == '__main__':
     if inicializar_chatbot():
-        print("\n--- Chatbot de Conhecimento (Teste Local) ---")
+        print("\n--- Chatbot de Conhecimento (Teste Local com Fontes) ---")
         print("Digite 'sair' para terminar.")
         while True:
             pergunta = input("\nSua pergunta: ")
             if pergunta.lower() == 'sair':
                 break
             
-            success, resposta = get_chatbot_answer(pergunta)
-            if success:
-                print("\nResposta:")
-                print(resposta)
+            # A função de teste agora usa o stream
+            full_response = ""
+            sources_received = []
+            for chunk_data in get_chatbot_answer_stream(pergunta):
+                try:
+                    data = json.loads(chunk_data.replace("data: ", "").strip())
+                    if "token" in data:
+                        full_response += data["token"]
+                    if "sources" in data:
+                        sources_received = data["sources"]
+                except json.JSONDecodeError:
+                    print(f"Erro ao decodificar JSON: {chunk_data}")
+                    continue
+            
+            if full_response or sources_received:
+                print("\n--- Resposta Gerada ---")
+                print(full_response)
+                print("\n--- Fontes ---")
+                if sources_received:
+                    for source in sources_received:
+                        print(f"- Título: {source['title']}, Arquivo: {source['source_file']}")
+                else:
+                    print("Nenhuma fonte encontrada.")
+                print("---------------------")
             else:
-                print(f"Erro: {resposta}")
+                print("Erro: Nenhuma resposta ou fonte recebida.")
